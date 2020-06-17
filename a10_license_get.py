@@ -30,17 +30,17 @@ def glm_login():
     '''
     Description: Method to log into glm.a10networks.com and return the auth token for follow up api calls.
     '''
-    json_header = {'Content-Type': 'application/json'}
-    values = """
-          {
-            "user": {
-              "email": "%s",
-              "password": "%s"
-            }
-          }
-        """ % (glm_username, glm_password)
     try:
         url = 'https://glm.a10networks.com/users/sign_in.json'
+        json_header = {'Content-Type': 'application/json'}
+        values = """
+              {
+                "user": {
+                  "email": "%s",
+                  "password": "%s"
+                }
+              }
+            """ % (glm_username, glm_password)
         r = requests.post(url, headers=json_header, data=values, verify=False)
         content = r.content
         parsed_json = json.loads(content)
@@ -145,7 +145,7 @@ def a10_write_memory(sign):
 # clideploy: run some CLI commands and then export as a file
 def a10_clideploy(sign, glm_token):
     '''
-    Description: re-set the glm-commands and send the new license request.
+    Description: re-set the glm-commands and send GLM server the new license request.
     '''
     try:
         url = 'https://{}/axapi/v3/clideploy'.format(a10_host)
@@ -160,14 +160,14 @@ def a10_clideploy(sign, glm_token):
         payload2 = {'commandList':
                         ['glm send license-request']}
         requests.post(url, headers=headers, json=payload2, verify=False)
-        time.sleep(2)
         print('sending license-request...')
+        time.sleep(2)
         payload3 = {'commandList':
                         ['show license-info']}
         r = requests.post(url, headers=headers, json=payload3, verify=False)
         print('output license-info...')
         if r.status_code == 200:
-            with open('show.txt', 'w') as f:
+            with open('show_license-info.txt', 'w') as f:
                 f.write(r.text)
                 print('Successfully done!')
 
