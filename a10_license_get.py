@@ -11,7 +11,7 @@ requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 parser = argparse.ArgumentParser(description='Get the new license and apply it to your vthunder')
 parser.add_argument('-u', '--glm_username', default='user@example.com', help='the username for login to your GLM account. Default value is: user1@example.com')
 parser.add_argument('-p', '--glm_password', default='p@44w0rD', help='the password for login to your GLM account. Default value is: p@44w0rD')
-parser.add_argument('-H', '--a10_host', default='172.31.31.31', help='the username for login to your vthunder. Default value is: 172.31.31.31')
+parser.add_argument('-H', '--a10_host', default='172.31.31.31', help='the IP address for login to your vthunder. Default value is: 172.31.31.31')
 parser.add_argument('-U', '--a10_username', default='admin', help='the username for login to your vthunder. Default value is: admin')
 parser.add_argument('-P', '--a10_password', default='a10', help='the password for login to your vthunder. Default value is: a10')
 
