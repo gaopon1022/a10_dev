@@ -2,6 +2,7 @@ import argparse
 import datetime
 import time
 import json
+import random
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 # ignore the SSL server Certificate error
@@ -56,7 +57,7 @@ def glm_login():
         print('Error in glm_login: ', e)
 
 
-def get_new_license_token(glm_req_header):
+def create_new_license_token(glm_req_header):
     '''
     Description: create the new trial license and get the value.
     '''
@@ -79,11 +80,28 @@ def get_new_license_token(glm_req_header):
         r = requests.post(url, headers=glm_req_header,data=values, verify=False)
         content = r.content
         parsed_json = json.loads(content)
-        token = parsed_json['token']
-        return token
+        new_token = parsed_json['token']
+        return new_token
 
     except Exception as e:
         print('Error in get_new_license_token: ', e)
+
+def get_available_license_token(glm_req_header):
+    '''
+    Description: get the available license token-id the bandwidths of which still remain.
+    '''
+    try:
+        license_prefix = 'trial-flexpool'
+        url = 'https://glm.a10networks.com/licenses.json'
+        r = requests.get(url, headers=glm_req_header)
+        content = r.content
+        parsed_json = json.loads(content)
+        available_tokens = [e['token'] for e in parsed_json if e['name'].startswith(license_prefix) and
+                  e['remaining_bandwidth'] > 0]
+        return available_tokens
+
+    except Exception as e:
+        print('Error in get_available_license_token: ', e)
 
 
 # from here: aXAPI function
@@ -148,6 +166,8 @@ def a10_clideploy(sign, glm_token):
     Description: re-set the glm-commands and send GLM server the new license request.
     '''
     try:
+        file_date = datetime.date.today()
+        file_suffix = random.randrange(111111, 999999)
         url = 'https://{}/axapi/v3/clideploy'.format(a10_host)
         headers = {'Authorization': 'A10 {}'.format(sign),
                    'Content-Type': 'application/json'}
@@ -167,7 +187,7 @@ def a10_clideploy(sign, glm_token):
         r = requests.post(url, headers=headers, json=payload3, verify=False)
         print('output license-info...')
         if r.status_code == 200:
-            with open('show_license-info.txt', 'w') as f:
+            with open('show_license-info_{0}_{1}.txt'.format(file_date, file_suffix), 'w') as f:
                 f.write(r.text)
                 print('Successfully done!')
 
@@ -177,7 +197,11 @@ def a10_clideploy(sign, glm_token):
 
 if __name__ == '__main__':
     glm_req_header = glm_login()
-    glm_token = get_new_license_token(glm_req_header)
+    token_list = get_available_license_token(glm_req_header)
+    if token_list:
+        glm_token = random.choice(token_list)
+    else:
+        glm_token = create_new_license_token(glm_req_header)
     print('glm token is: {}'.format(glm_token))
     sign = a10_login()
     a10_clideploy(sign, glm_token)
