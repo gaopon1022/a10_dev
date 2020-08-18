@@ -253,7 +253,7 @@ if __name__ == '__main__':
         glm_token = random.choice(token_list)
     else:
         glm_token = create_new_license_token(glm_req_header)
-    print('glm token is: {}'.format(glm_token))
+    print('glm token:{} will be attached...'.format(glm_token))
     sign = a10_login()
     a10_clideploy(sign, glm_token)
     a10_write_memory(sign)
