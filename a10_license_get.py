@@ -247,7 +247,7 @@ def a10_clideploy(sign, glm_token):
 
 if __name__ == '__main__':
     glm_req_header = glm_login()
-	revoke_and_delete_expired_license(glm_req_header)
+    revoke_and_delete_expired_license(glm_req_header)
     token_list = get_available_license_token(glm_req_header)
     if token_list:
         glm_token = random.choice(token_list)
