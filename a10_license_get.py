@@ -86,6 +86,7 @@ def create_new_license_token(glm_req_header):
     except Exception as e:
         print('Error in get_new_license_token: ', e)
 
+
 def get_available_license_token(glm_req_header):
     '''
     Description: get the available license token-id the bandwidths of which still remain.
@@ -102,6 +103,55 @@ def get_available_license_token(glm_req_header):
 
     except Exception as e:
         print('Error in get_available_license_token: ', e)
+
+
+def revoke_and_delete_expired_license(glm_req_header):
+    '''
+    Description: revoke the expired licenses and then clear them all.
+    '''
+    try:
+        today = datetime.datetime.now()
+        today_txt = today.strftime("%Y-%m-%d")
+        today_txt2 = today_txt.replace('-', '')
+
+        license_prefix = 'trial-flexpool'
+        url = 'https://glm.a10networks.com/licenses.json'
+        r = requests.get(url, headers=glm_req_header)
+        content = r.content
+        parsed_json = json.loads(content)
+        expired_license_ids = [e['id'] for e in parsed_json
+                                    if e['name'].startswith(license_prefix)
+                                    and e['expires_at'][:10].replace('-', '') < today_txt2]
+        print('check whether to exist the remaining expired licenses...')
+        time.sleep(2)
+        if not expired_license_ids:
+            print("...licenses that should be revoked doesn't exist")
+            return
+        else:
+            for expired_license_id in expired_license_ids:
+                url = 'https://glm.a10networks.com/activations.json'
+                r = requests.get(url, headers=glm_req_header)
+                content = r.content
+                parsed_json = json.loads(content)
+                expired_ids = [{'id': e['id'], 'host_name': e['host_name']} for e in parsed_json
+                              if e['license_id'] == expired_license_id ]
+
+            # at first revoke the licenses
+            for expired_id in expired_ids:
+                url = 'https://glm.a10networks.com/activations/{}/revoke_activation.json'.format(expired_id['id'])
+                r = requests.post(url, headers=glm_req_header, verify=False)
+                content = r.content
+                parsed_json = json.loads(content)
+                print(expired_id['host_name'] + ": " + parsed_json['message'])
+
+            # finally delete the licenses
+            for expired_license_id in expired_license_ids:
+                url = 'https://glm.a10networks.com/licenses/{}.json'.format(expired_license_id)
+                requests.delete(url, headers=glm_req_header, verify=False)
+                print("revoked licenses's completely deleted...!!")
+
+    except Exception as e:
+        print('Error in revoke_and_delete_expired_license: ', e)
 
 
 # from here: aXAPI function
@@ -197,6 +247,7 @@ def a10_clideploy(sign, glm_token):
 
 if __name__ == '__main__':
     glm_req_header = glm_login()
+	revoke_and_delete_expired_license(glm_req_header)
     token_list = get_available_license_token(glm_req_header)
     if token_list:
         glm_token = random.choice(token_list)
