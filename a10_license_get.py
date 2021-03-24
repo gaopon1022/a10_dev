@@ -97,8 +97,12 @@ def get_available_license_token(glm_req_header):
         r = requests.get(url, headers=glm_req_header)
         content = r.content
         parsed_json = json.loads(content)
-        available_tokens = [e['token'] for e in parsed_json if e['name'].startswith(license_prefix) and
-                  e['remaining_bandwidth'] > 0]
+        available_tokens = []
+        for e in parsed_json:
+            if e['name'] is None:
+                pass
+            elif e['name'].startswith(license_prefix) and e['remaining_bandwidth'] > 0:
+                available_tokens.append(e['token'])
         return available_tokens
 
     except Exception as e:
@@ -119,9 +123,12 @@ def revoke_and_delete_expired_license(glm_req_header):
         r = requests.get(url, headers=glm_req_header)
         content = r.content
         parsed_json = json.loads(content)
-        expired_license_ids = [e['id'] for e in parsed_json
-                                    if e['name'].startswith(license_prefix)
-                                    and e['expires_at'][:10].replace('-', '') < today_txt2]
+        expired_license_ids = []
+        for e in parsed_json:
+            if e['name'] is None:
+                pass
+            elif e['name'].startswith(license_prefix) and e['expires_at'][:10].replace('-', '') < today_txt2:
+                expired_license_ids.append(e['token'])
         print('check whether to exist the remaining expired licenses...')
         time.sleep(2)
         if not expired_license_ids:
@@ -134,7 +141,7 @@ def revoke_and_delete_expired_license(glm_req_header):
                 content = r.content
                 parsed_json = json.loads(content)
                 expired_ids = [{'id': e['id'], 'host_name': e['host_name']} for e in parsed_json
-                              if e['license_id'] == expired_license_id ]
+                              if e['license_id'] == expired_license_id]
 
             # at first revoke the licenses
             for expired_id in expired_ids:
